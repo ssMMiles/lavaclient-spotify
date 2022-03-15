@@ -21,7 +21,6 @@ export function load(options: SpotifyManagerOptions) {
 
 declare module "lavaclient" {
     interface Node {
-        //@ts-ignore
         readonly spotify: SpotifyManager;
 
         /**
@@ -31,7 +30,6 @@ declare module "lavaclient" {
     }
 
     interface Cluster {
-        //@ts-ignore
         readonly spotify: SpotifyManager;
 
         /**
