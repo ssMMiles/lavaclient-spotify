@@ -1,30 +1,6 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SpotifyTrack = void 0;
-const Lavalink = __importStar(require("@lavaclient/types"));
 const SpotifyItem_1 = require("../abstract/SpotifyItem");
 class SpotifyTrack extends SpotifyItem_1.SpotifyItem {
     constructor(manager, track) {
@@ -50,7 +26,7 @@ class SpotifyTrack extends SpotifyItem_1.SpotifyItem {
         }
         return this.album.images.sort((a, b) => b.width - a.width)[0].url;
     }
-    async resolveYoutubeTrack() {
+    resolveYoutubeTrack() {
         return new Promise(async (resolve, reject) => {
             if (this.#track != null) {
                 return this.#track;
@@ -63,23 +39,16 @@ class SpotifyTrack extends SpotifyItem_1.SpotifyItem {
                 .replace("{artist}", this.data.artists[0].name);
             const searchResults = await this.manager.lavaclient.rest.loadTracks(query);
             switch (searchResults.loadType) {
-                case Lavalink.LoadType.TrackLoaded:
-                    resolve((this.#track = searchResults.tracks[0]));
-                    break;
-                case Lavalink.LoadType.PlaylistLoaded:
-                    resolve((this.#track = searchResults.tracks[0]));
-                    break;
-                case Lavalink.LoadType.NoMatches:
-                    reject(new Error("No matches found."));
-                    break;
-                case Lavalink.LoadType.SearchResult:
-                    console.log("got search results");
-                    console.dir(searchResults, { depth: 5, colors: true });
-                    resolve((this.#track = searchResults.tracks[0]));
-                    break;
-                default:
-                    reject(new Error("Unknown LoadType"));
+                case "LOAD_FAILED":
+                case "NO_MATCHES":
+                    return reject(new Error("No songs found."));
+                case "PLAYLIST_LOADED":
+                    return resolve(searchResults.tracks[0]);
+                case "TRACK_LOADED":
+                case "SEARCH_RESULT":
+                    return resolve(searchResults.tracks[0]);
             }
+            return reject(new Error("Failed to load."));
         });
     }
 }
