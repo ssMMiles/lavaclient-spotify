@@ -1,4 +1,4 @@
-import * as Lavalink from "@lavaclient/types";
+import type * as Lavalink from "@lavaclient/types";
 import { SpotifyItem, SpotifyItemType } from "../abstract/SpotifyItem";
 import type { Spotify } from "../spotify";
 import type { SpotifyManager } from "../SpotifyManager";
@@ -63,7 +63,7 @@ export class SpotifyTrack extends SpotifyItem {
     /**
      * Resolves the YouTube track that can be played.
      */
-    async resolveYoutubeTrack(): Promise<Lavalink.Track> {
+    resolveYoutubeTrack(): Promise<Lavalink.Track> {
         return new Promise(async (resolve, reject) => {
             if (this.#track != null) {
                 return this.#track;
@@ -77,27 +77,22 @@ export class SpotifyTrack extends SpotifyItem {
                 .replace("{track}", this.data.name)
                 .replace("{artist}", this.data.artists[0].name);
 
-            const searchResults: Lavalink.LoadTracksResponse =
-                await this.manager.lavaclient.rest.loadTracks(query);
+            const searchResults = await this.manager.lavaclient.rest.loadTracks(
+                query
+            );
 
             switch (searchResults.loadType) {
-                case Lavalink.LoadType.TrackLoaded:
-                    resolve((this.#track = searchResults.tracks[0]));
-                    break;
-                case Lavalink.LoadType.PlaylistLoaded:
-                    resolve((this.#track = searchResults.tracks[0]));
-                    break;
-                case Lavalink.LoadType.NoMatches:
-                    reject(new Error("No matches found."));
-                    break;
-                case Lavalink.LoadType.SearchResult:
-                    console.log("got search results");
-                    console.dir(searchResults, { depth: 5, colors: true });
-                    resolve((this.#track = searchResults.tracks[0]));
-                    break;
-                default:
-                    reject(new Error("Unknown LoadType"));
+                case "LOAD_FAILED":
+                case "NO_MATCHES":
+                    return reject(new Error("No songs found."));
+                case "PLAYLIST_LOADED":
+                    return resolve(searchResults.tracks[0]);
+                case "TRACK_LOADED":
+                case "SEARCH_RESULT":
+                    return resolve(searchResults.tracks[0]);
             }
+
+            return reject(new Error("Failed to load."));
         });
     }
 }
