@@ -82,11 +82,6 @@ export class SpotifyTrack extends SpotifyItem {
 
             switch (searchResults.loadType) {
                 case Lavalink.LoadType.TrackLoaded:
-                case Lavalink.LoadType.SearchResult:
-                case Lavalink.LoadType.PlaylistLoaded:
-                    if (searchResults.tracks.length === 0)
-                        return reject(new Error("No tracks found."));
-
                     resolve((this.#track = searchResults.tracks[0]));
                     break;
                 case Lavalink.LoadType.PlaylistLoaded:
@@ -94,6 +89,9 @@ export class SpotifyTrack extends SpotifyItem {
                     break;
                 case Lavalink.LoadType.NoMatches:
                     reject(new Error("No matches found."));
+                    break;
+                case Lavalink.LoadType.SearchResult:
+                    resolve((this.#track = searchResults.tracks[0]));
                     break;
                 default:
                     reject(new Error("Unknown LoadType"));
