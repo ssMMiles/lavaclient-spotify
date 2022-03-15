@@ -66,13 +66,9 @@ class SpotifyTrack extends SpotifyItem_1.SpotifyItem {
                 case Lavalink.LoadType.TrackLoaded:
                 case Lavalink.LoadType.SearchResult:
                 case Lavalink.LoadType.PlaylistLoaded:
-                    try {
-                        const track = searchResults.tracks[0];
-                        resolve((this.#track = track));
-                    }
-                    catch (err) {
-                        reject(new Error("No track found."));
-                    }
+                    if (searchResults.tracks.length === 0)
+                        return reject(new Error("No tracks found."));
+                    resolve((this.#track = searchResults.tracks[0]));
                     break;
                 case Lavalink.LoadType.PlaylistLoaded:
                     resolve((this.#track = searchResults.tracks[0]));
