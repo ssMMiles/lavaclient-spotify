@@ -91,7 +91,7 @@ export class SpotifyTrack extends SpotifyItem {
                     reject(new Error("No matches found."));
                     break;
                 case Lavalink.LoadType.SearchResult:
-                    console.log("got result");
+                    console.log("got search results");
                     console.dir(searchResults, { depth: 5, colors: true });
                     resolve((this.#track = searchResults.tracks[0]));
                     break;
