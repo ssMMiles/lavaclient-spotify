@@ -3,7 +3,6 @@ import { SpotifyItem, SpotifyItemType } from "../abstract/SpotifyItem";
 import type { Spotify } from "../spotify";
 import type { SpotifyManager } from "../SpotifyManager";
 
-
 export class SpotifyTrack extends SpotifyItem {
     type: SpotifyItemType.Track = SpotifyItemType.Track;
 
@@ -65,38 +64,43 @@ export class SpotifyTrack extends SpotifyItem {
      * Resolves the YouTube track that can be played.
      */
     async resolveYoutubeTrack(): Promise<Lavalink.Track> {
-      return new Promise(async (resolve, reject) => {
-        if (this.#track != null) {
-            return this.#track;
-        }
+        return new Promise(async (resolve, reject) => {
+            if (this.#track != null) {
+                return this.#track;
+            }
 
-        if (!this.manager.lavaclient.rest) return reject(new Error("Lavalink isn't connected."));
+            if (!this.manager.lavaclient.rest)
+                return reject(new Error("Lavalink isn't connected."));
 
-        let query = `${this.manager.searchPrefix}`;
-        query += this.manager.options.searchFormat
-            .replace("{track}", this.data.name)
-            .replace("{artist}", this.data.artists[0].name);
+            let query = `${this.manager.searchPrefix}`;
+            query += this.manager.options.searchFormat
+                .replace("{track}", this.data.name)
+                .replace("{artist}", this.data.artists[0].name);
 
-        const searchResults: Lavalink.LoadTracksResponse = await this.manager.lavaclient.rest.loadTracks(
-            query
-        );
+            const searchResults: Lavalink.LoadTracksResponse =
+                await this.manager.lavaclient.rest.loadTracks(query);
 
-        switch (searchResults.loadType) {
-          case Lavalink.LoadType.TrackLoaded:
-            resolve((this.#track = searchResults.tracks[0]));
-            break;    
-          case Lavalink.LoadType.PlaylistLoaded:
-            resolve((this.#track = searchResults.tracks[0]));
-            break;
-          case Lavalink.LoadType.NoMatches:
-            reject(new Error("No matches found."));
-            break;
-          case Lavalink.LoadType.SearchResult:
-            reject(new Error("Idk what this means tbh, got LoadType.SearchResult on resolving track"));
-            break;
-          default:
-            reject(new Error("Unknown LoadType"));
-        }
-      })
+            switch (searchResults.loadType) {
+                case Lavalink.LoadType.TrackLoaded:
+                case Lavalink.LoadType.SearchResult:
+                case Lavalink.LoadType.PlaylistLoaded:
+                    try {
+                        const track = searchResults.tracks[0];
+                        resolve((this.#track = track));
+                    } catch (err) {
+                        reject(new Error("No track found."));
+                    }
+
+                    break;
+                case Lavalink.LoadType.PlaylistLoaded:
+                    resolve((this.#track = searchResults.tracks[0]));
+                    break;
+                case Lavalink.LoadType.NoMatches:
+                    reject(new Error("No matches found."));
+                    break;
+                default:
+                    reject(new Error("Unknown LoadType"));
+            }
+        });
     }
 }

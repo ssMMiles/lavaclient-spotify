@@ -64,16 +64,21 @@ class SpotifyTrack extends SpotifyItem_1.SpotifyItem {
             const searchResults = await this.manager.lavaclient.rest.loadTracks(query);
             switch (searchResults.loadType) {
                 case Lavalink.LoadType.TrackLoaded:
-                    resolve((this.#track = searchResults.tracks[0]));
+                case Lavalink.LoadType.SearchResult:
+                case Lavalink.LoadType.PlaylistLoaded:
+                    try {
+                        const track = searchResults.tracks[0];
+                        resolve((this.#track = track));
+                    }
+                    catch (err) {
+                        reject(new Error("No track found."));
+                    }
                     break;
                 case Lavalink.LoadType.PlaylistLoaded:
                     resolve((this.#track = searchResults.tracks[0]));
                     break;
                 case Lavalink.LoadType.NoMatches:
                     reject(new Error("No matches found."));
-                    break;
-                case Lavalink.LoadType.SearchResult:
-                    reject(new Error("Idk what this means tbh, got LoadType.SearchResult on resolving track"));
                     break;
                 default:
                     reject(new Error("Unknown LoadType"));

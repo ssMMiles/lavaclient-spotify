@@ -9,7 +9,7 @@
         "lint": "eslint  --ext .ts",
         "lint:fix": "yarn lint --fix",
         "types": "tsc -d",
-        "types:bundle": "dts-bundle --name @lavaclient/spotify --outputAsModuleFolder --main dist/index.d.ts --out ../index.d.ts --removeSource"
+        "types:bundle": "dts-bundle --name @lavaclient/spotify --outputAsModuleFolder --main dist/index.d.ts --out dist/index.d.ts --removeSource"
     },
     "repository": {
         "type": "git",
