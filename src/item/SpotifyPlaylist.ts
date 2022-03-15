@@ -66,17 +66,26 @@ export class SpotifyPlaylist extends SpotifyItem {
      * @returns The resolved lavalink tracks.
      */
     async resolveYoutubeTracks(): Promise<[Lavalink.Track[], number]> {
-        const tracks = [];
-        let failures = 0
+        return new Promise((resolve, _) => {
 
-        for (const track of this.tracks) {
-          try {
-            tracks.push(await track.resolveYoutubeTrack());
-          } catch (err) {
-            failures++;
-          }
-        }
+          const tracks: Lavalink.Track[] = [];
+          let failures: number = 0;
 
-        return [tracks, failures];
+          const handleTrack = async (track: SpotifyTrack) => {
+              try {
+                const resolvedTrack = await track.resolveYoutubeTrack();
+                tracks.push(resolvedTrack);
+              } catch (e) {
+                failures++;
+              } finally {
+                if (tracks.length + failures === this.tracks.length) {
+                  resolve([tracks, failures]);
+                }
+              }
+          };
+
+          this.tracks.map(handleTrack);
+          
+        });
     }
 }
