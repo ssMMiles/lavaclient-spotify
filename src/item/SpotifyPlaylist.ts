@@ -4,7 +4,6 @@ import type { Spotify } from "../spotify";
 import type { SpotifyManager } from "../SpotifyManager";
 import type { SpotifyTrack } from "./SpotifyTrack";
 
-
 export class SpotifyPlaylist extends SpotifyItem {
     readonly type: SpotifyItemType.Playlist = SpotifyItemType.Playlist;
 
@@ -66,26 +65,42 @@ export class SpotifyPlaylist extends SpotifyItem {
      * @returns The resolved lavalink tracks.
      */
     async resolveYoutubeTracks(): Promise<[Lavalink.Track[], number]> {
-        return new Promise((resolve, _) => {
+        const loadBatch = async (
+            startIndex: number
+        ): Promise<[Lavalink.Track[], number]> => {
+            return new Promise((resolve, _) => {
+                const resolvedTracks: Lavalink.Track[] = [];
+                let failures: number = 0;
 
-          const tracks: Lavalink.Track[] = [];
-          let failures: number = 0;
+                const tracks: SpotifyTrack[] = this.tracks.slice(
+                    startIndex,
+                    startIndex + 10
+                );
 
-          const handleTrack = async (track: SpotifyTrack) => {
-              try {
-                const resolvedTrack = await track.resolveYoutubeTrack();
-                tracks.push(resolvedTrack);
-              } catch (e) {
-                failures++;
-              } finally {
-                if (tracks.length + failures === this.tracks.length) {
-                  resolve([tracks, failures]);
-                }
-              }
-          };
+                tracks.map(async (track: SpotifyTrack) => {
+                    try {
+                        const resolvedTrack = await track.resolveYoutubeTrack();
+                        resolvedTracks.push(resolvedTrack);
+                    } catch (e) {
+                        failures++;
+                    } finally {
+                        if (tracks.length + failures === this.tracks.length) {
+                            resolve([resolvedTracks, failures]);
+                        }
+                    }
+                });
+            });
+        };
 
-          this.tracks.map(handleTrack);
-          
-        });
+        const resolvedTracks: Lavalink.Track[] = [];
+        let failures: number = 0;
+
+        for (let i = 0; i < this.tracks.length; i += 10) {
+            const [batch, batchFailures] = await loadBatch(i);
+            resolvedTracks.push(...batch);
+            failures += batchFailures;
+        }
+
+        return [resolvedTracks, failures];
     }
 }
